@@ -16,8 +16,26 @@ struct Config {
     force_shutdown_timeout_secs: Option<f64>,
 }
 
+const DEVICEPATH: &str = if let Ok(product_name) = std::process::Command::new("cat")
+        .arg("/sys/devices/virtual/dmi/id/product_name")
+        .output()
+        .map(|o| o.stdout)
+        .map(String::from_utf8)
+        .transpose()
+        .map_err(|e| format!("Failed to execute command: {}", e))
+        .and_then(|opt| opt.ok_or_else(|| "Invalid utf-8 in command output".to_owned()))
+    {
+        if product_name.trim() == "Jupiter 1" {
+            "/sys/class/power_supply/BAT1/"
+        } else {
+            "/sys/class/power_supply/BAT*/"
+        }
+    } else {
+        "/sys/class/power_supply/BAT*/"
+    };
+
 fn read_battery_string(var_name: &str) -> Option<String> {
-    let path = format!("/sys/class/power_supply/BAT1/{var_name}");
+    let path = format!("{}/{}", DEVICEPATH, var_name);
     match fs::read_to_string(&path) {
         Err(err) => {
             eprintln!("read {path}: {err}");
@@ -28,7 +46,7 @@ fn read_battery_string(var_name: &str) -> Option<String> {
 }
 
 fn read_battery_f64(var_name: &str) -> Option<f64> {
-    let path = format!("/sys/class/power_supply/BAT1/{var_name}");
+    let path = format!("{}/{}", DEVICEPATH, var_name);
     match fs::read_to_string(&path) {
         Err(err) => {
             eprintln!("read {path}: {err}");
