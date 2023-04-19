@@ -21,8 +21,7 @@ const DEVICEPATH: &str = if let Ok(product_name) = std::process::Command::new("c
         .output()
         .map(|o| o.stdout)
         .map(String::from_utf8)
-        .transpose()
-        .map_err(|e| format!("Failed to execute command: {}", e))
+        .map_err(|e| format!("Failed to decode command output: {}", e)) // <--- new line
         .and_then(|opt| opt.ok_or_else(|| "Invalid utf-8 in command output".to_owned()))
     {
         if product_name.trim() == "Jupiter 1" {
