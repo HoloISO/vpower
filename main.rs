@@ -21,8 +21,8 @@ const DEVICEPATH: &str = if let Ok(product_name) = std::process::Command::new("c
         .output()
         .map(|o| o.stdout)
         .map(String::from_utf8)
-        .map_err(|e| format!("Failed to decode command output: {}", e)) // <--- new line
-        .and_then(|opt| opt.ok_or_else(|| "Invalid utf-8 in command output".to_owned()))
+        .map_err(|e| format!("Failed to decode command output: {}", e))
+        .and_then(|opt| opt.map_err(|e| format!("Invalid utf-8 in command output: {}", e)))
     {
         if product_name.trim() == "Jupiter 1" {
             "/sys/class/power_supply/BAT1/"
